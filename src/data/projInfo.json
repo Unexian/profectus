@@ -1,15 +1,15 @@
 {
 	"$schema": "./projInfo-schema.json",
 
-	"title": "The omega tree",
-	"description": "The Omega Tree but remade in Profectus",
+	"title": "The Omega Tree",
+	"description": "Remember Omega Layers? This is it now. Feel old yet?",
 	"id": "omega",
 	"author": "Nif",
 	"discordName": "",
 	"discordLink": "",
 
-	"versionNumber": "0.0",
-	"versionTitle": "Initial Commit",
+	"versionNumber": "½.0.0",
+	"versionTitle": "The beginning",
 
 	"allowGoBack": true,
 	"defaultShowSmall": false,
@@ -17,7 +17,7 @@
 	"useHeader": true,
 	"banner": null,
 	"logo": "",
-	"initialTabs": [ "main" ],
+	"initialTabs": [ "main", "Alpha" ],
 
 	"maxTickLength": 3600,
 	"offlineLimit": 1,

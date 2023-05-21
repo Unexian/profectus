@@ -13,18 +13,19 @@ import Decimal, { format, formatTime } from "util/bignum";
 import { render } from "util/vue";
 import { computed, toRaw } from "vue";
 import Alpha from "./layers/alpha";
+import { noPersist } from "game/persistence";
 
 /**
  * @hidden
  */
 export const main = createLayer("main", function (this: BaseLayer) {
-    const points = createResource<DecimalSource>(5);
+    const points = createResource<DecimalSource>(1);
     const best = trackBest(points);
     const total = trackTotal(points);
 
     const pointGain = computed(() => {
         // eslint-disable-next-line prefer-const
-        let gain = new Decimal(1);
+        let gain = Alpha.effect()
         return gain;
     });
     globalBus.on("update", diff => {
@@ -33,7 +34,7 @@ export const main = createLayer("main", function (this: BaseLayer) {
     const oomps = trackOOMPS(points, pointGain);
 
     const tree = createTree(() => ({
-        nodes: [[Alpha.treeNode]],
+        nodes: noPersist([[Alpha.treeNode]]),
         branches: [],
         onReset() {
             points.value = toRaw(this.resettingNode.value) === toRaw(Alpha.treeNode) ? 0 : 10;
