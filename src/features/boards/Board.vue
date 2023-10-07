@@ -19,7 +19,7 @@
         @touchstart="(e: TouchEvent) => mouseDown(e)"
         @mouseup="() => endDragging(unref(draggingNode))"
         @touchend.passive="() => endDragging(unref(draggingNode))"
-        @mouseleave="() => endDragging(unref(draggingNode))"
+        @mouseleave="() => endDragging(unref(draggingNode), true)"
     >
         <svg class="stage" width="100%" height="100%">
             <g class="g1">
@@ -28,7 +28,16 @@
                         v-for="link in unref(links) || []"
                         :key="`${link.startNode.id}-${link.endNode.id}`"
                     >
-                        <BoardLinkVue :link="link" />
+                        <BoardLinkVue
+                            :link="link"
+                            :dragging="unref(draggingNode)"
+                            :dragged="
+                                link.startNode === unref(draggingNode) ||
+                                link.endNode === unref(draggingNode)
+                                    ? dragged
+                                    : undefined
+                            "
+                        />
                     </g>
                 </transition-group>
                 <transition-group name="grow" :duration="500" appear>
@@ -38,10 +47,12 @@
                             :nodeType="types[node.type]"
                             :dragging="unref(draggingNode)"
                             :dragged="unref(draggingNode) === node ? dragged : undefined"
-                            :hasDragged="hasDragged"
-                            :receivingNode="unref(receivingNode)?.id === node.id"
-                            :selectedNode="unref(selectedNode)"
-                            :selectedAction="unref(selectedAction)"
+                            :hasDragged="unref(draggingNode) == null ? false : hasDragged"
+                            :receivingNode="unref(receivingNode) === node"
+                            :isSelected="unref(selectedNode) === node"
+                            :selectedAction="
+                                unref(selectedNode) === node ? unref(selectedAction) : null
+                            "
                             @mouseDown="mouseDown"
                             @endDragging="endDragging"
                             @clickAction="(actionId: string) => clickAction(node, actionId)"
@@ -97,6 +108,10 @@ const stage = ref<any>(null);
 
 const sortedNodes = computed(() => {
     const nodes = props.nodes.value.slice();
+    if (props.selectedNode.value) {
+        const node = nodes.splice(nodes.indexOf(props.selectedNode.value), 1)[0];
+        nodes.push(node);
+    }
     if (props.draggingNode.value) {
         const node = nodes.splice(nodes.indexOf(props.draggingNode.value), 1)[0];
         nodes.push(node);
@@ -223,7 +238,7 @@ function drag(e: MouseEvent | TouchEvent) {
     }
 }
 
-function endDragging(node: BoardNode | null) {
+function endDragging(node: BoardNode | null, mouseLeave = false) {
     if (props.draggingNode.value != null && props.draggingNode.value === node) {
         if (props.receivingNode.value == null) {
             props.draggingNode.value.position.x += Math.round(dragged.value.x / 25) * 25;
@@ -241,7 +256,7 @@ function endDragging(node: BoardNode | null) {
         }
 
         props.setDraggingNode.value(null);
-    } else if (!hasDragged.value) {
+    } else if (!hasDragged.value && !mouseLeave) {
         props.state.value.selectedNode = null;
         props.state.value.selectedAction = null;
     }

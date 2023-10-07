@@ -104,7 +104,7 @@ export interface NodeTypeOptions {
     shape: NodeComputable<Shape>;
     /** Whether the node can accept another node being dropped upon it. */
     canAccept?: NodeComputable<boolean, [BoardNode]>;
-    /** The progress value of the node. */
+    /** The progress value of the node, from 0 to 1. */
     progress?: NodeComputable<number>;
     /** How the progress should be displayed on the node. */
     progressDisplay?: NodeComputable<ProgressDisplay>;
@@ -118,7 +118,7 @@ export interface NodeTypeOptions {
     titleColor?: NodeComputable<string>;
     /** The list of action options for the node. */
     actions?: BoardNodeActionOptions[];
-    /** The distance between the center of the node and its actions. */
+    /** The arc between each action, in radians. */
     actionDistance?: NodeComputable<number>;
     /** A function that is called when the node is clicked. */
     onClick?: (node: BoardNode) => void;
@@ -384,21 +384,6 @@ export function createBoard<T extends BoardOptions>(
                     processedBoard.state.selectedAction = action?.id ?? null;
                 }
             }
-        });
-        board.selectedAction = computed(() => {
-            const selectedNode = processedBoard.selectedNode.value;
-            if (selectedNode == null) {
-                return null;
-            }
-            const type = processedBoard.types[selectedNode.type];
-            if (type.actions == null) {
-                return null;
-            }
-            return (
-                type.actions.find(
-                    action => action.id === unref(processedBoard.state).selectedAction
-                ) || null
-            );
         });
         board.mousePosition = ref(null);
         if (board.links) {
