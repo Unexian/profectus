@@ -1,8 +1,8 @@
 import Spacer from "components/layout/Spacer.vue";
-import { jsx } from "features/feature";
+import { findFeatures, jsx } from "features/feature";
 import { createResource, trackBest, trackOOMPS, trackTotal } from "features/resources/resource";
 import type { GenericTree } from "features/trees/tree";
-import { branchedResetPropagation, createTree } from "features/trees/tree";
+import { defaultResetPropagation, createTree } from "features/trees/tree";
 import { globalBus } from "game/events";
 import type { BaseLayer, GenericLayer } from "game/layers";
 import { createLayer } from "game/layers";
@@ -11,20 +11,31 @@ import player from "game/player";
 import type { DecimalSource } from "util/bignum";
 import Decimal, { format, formatTime } from "util/bignum";
 import { render } from "util/vue";
-import { computed, toRaw } from "vue";
-import prestige from "./layers/prestige";
+import { computed, unref } from "vue";
+import vertices from "./layers/vertices";
+import irrQuads from "./layers/irregular";
+import { UpgradeType, type GenericUpgrade } from "features/upgrades/upgrade";
 
 /**
  * @hidden
  */
 export const main = createLayer("main", function (this: BaseLayer) {
-    const points = createResource<DecimalSource>(10);
+    const points = createResource<DecimalSource>(10, "vertices");
     const best = trackBest(points);
     const total = trackTotal(points);
 
+    const vertexUpgrades = computed(() => (findFeatures(vertices, UpgradeType) as GenericUpgrade[]).filter(t => unref(t.bought)).length)
+
     const pointGain = computed(() => {
         // eslint-disable-next-line prefer-const
+        if (!unref(vertices.upgrades[11].bought)) return new Decimal(0)
+
         let gain = new Decimal(1);
+
+        if (unref(vertices.upgrades[12].bought)) gain = gain.mul(2)
+        if (unref(vertices.upgrades[13].bought)) gain = gain.mul(Decimal.div(unref(vertexUpgrades), 3).add(1))
+        if (unref(vertices.upgrades[14].bought)) gain = gain.mul(Decimal.add(points.value, 1).log10().add(1))
+
         return gain;
     });
     globalBus.on("update", diff => {
@@ -33,14 +44,16 @@ export const main = createLayer("main", function (this: BaseLayer) {
     const oomps = trackOOMPS(points, pointGain);
 
     const tree = createTree(() => ({
-        nodes: [[prestige.treeNode]],
-        branches: [],
+        nodes: [[vertices.treeNode], [irrQuads.treeNode]],
+        branches: [
+            {startNode: irrQuads.treeNode, endNode: vertices.treeNode}
+        ],
         onReset() {
-            points.value = toRaw(this.resettingNode.value) === toRaw(prestige.treeNode) ? 0 : 10;
+            points.value = 10;
             best.value = points.value;
             total.value = points.value;
         },
-        resetPropagation: branchedResetPropagation
+        resetPropagation: defaultResetPropagation
     })) as GenericTree;
 
     return {
@@ -58,7 +71,7 @@ export const main = createLayer("main", function (this: BaseLayer) {
                 <div>
                     {Decimal.lt(points.value, "1e1000") ? <span>You have </span> : null}
                     <h2>{format(points.value)}</h2>
-                    {Decimal.lt(points.value, "1e1e6") ? <span> points</span> : null}
+                    {Decimal.lt(points.value, "1e1e6") ? <span> vertices</span> : null}
                 </div>
                 {Decimal.gt(pointGain.value, 0) ? <div>({oomps.value})</div> : null}
                 <Spacer />
@@ -80,7 +93,7 @@ export const main = createLayer("main", function (this: BaseLayer) {
 export const getInitialLayers = (
     /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
     player: Partial<Player>
-): Array<GenericLayer> => [main, prestige];
+): Array<GenericLayer> => [main, vertices, irrQuads];
 
 /**
  * A computed ref whose value is true whenever the game is over.
