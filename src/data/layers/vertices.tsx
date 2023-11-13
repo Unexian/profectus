@@ -7,10 +7,12 @@ import { GenericUpgrade, UpgradeType, createUpgrade } from "features/upgrades/up
 import { createCostRequirement } from "game/requirements";
 import { createLayerTreeNode } from "data/common";
 import { computed, unref } from "vue";
-import { renderRow } from "util/vue";
+import { render, renderRow } from "util/vue";
 import { createReset } from "features/reset";
 import Decimal from "util/bignum";
 import { addTooltip } from "features/tooltips/tooltip";
+import { createRepeatable } from "features/repeatable";
+import Formula from "game/formulas/formulas";
 
 const id = 'v'
 const layer = createLayer(id, function (this: BaseLayer) {
@@ -24,7 +26,8 @@ const layer = createLayer(id, function (this: BaseLayer) {
 
     const treeNode = createLayerTreeNode(() => ({
         layerID: id,
-        color
+        color,
+        reset
     }));
 
     const vertexUpgrades = computed(() => (findFeatures(layer, UpgradeType) as GenericUpgrade[]).filter(t => unref(t.bought)).length)
@@ -70,6 +73,19 @@ const layer = createLayer(id, function (this: BaseLayer) {
             visibility: upgrades[13].bought
         })),
     }
+    const repeatables = {
+        21: createRepeatable(repeatable => ({
+            requirements: createCostRequirement(() => ({
+                resource: noPersist(points.value),
+                cost: Formula.variable(repeatable.amount).mul(25).add(50)
+            })),
+            display: {
+                description: "Multiply vertex generation by 1.5 per upgrade"
+            },
+            visibility: upgrades[14].bought
+        }))
+    }
+    // reload
     addTooltip(upgrades[13], ({
         display: computed(() => `currently: ${Decimal.div(unref(vertexUpgrades), 3).add(1)}x`)
     }))
@@ -78,10 +94,11 @@ const layer = createLayer(id, function (this: BaseLayer) {
     }))
     
     return {
-        name, color, points, reset, treeNode, upgrades,
+        name, color, points, treeNode, upgrades, repeatables,
         display: jsx(() => (<>
             <MainDisplay resource={points.value} color={color} />
             {renderRow(upgrades[11], upgrades[12], upgrades[13], upgrades[14])}
+            {render(repeatables[21])}
         </>))
     }
 })

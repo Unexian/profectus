@@ -12,14 +12,14 @@ import { createResourceTooltip } from "features/trees/tree";
 import { createHotkey } from "features/hotkey";
 import { render } from "util/vue";
 
-const id = 'iq'
+const id = 'l'
 const layer = createLayer(id, function (this: BaseLayer) {
-    const name = "Irregular Quadrilaterals"
+    const name = "Lines"
     const color = "#8390c4"
-    const points = createResource<DecimalSource>(0, "irregular quadrilaterals");
+    const points = createResource<DecimalSource>(0, "lines");
     
     const conversion = createCumulativeConversion(() => ({
-        formula: x => x.log10().sub(2),
+        formula: x => x.log10().div(6).sub(1),
         baseResource: main.points,
         gainResource: points
     }));
@@ -46,8 +46,8 @@ const layer = createLayer(id, function (this: BaseLayer) {
     }));
 
     const hotkey = createHotkey(() => ({
-        description: "Reset for irregular quadrilaterals",
-        key: "i",
+        description: "Reset for lines",
+        key: "l",
         onPress: resetButton.onClick
     }));
 

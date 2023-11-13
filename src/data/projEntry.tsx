@@ -13,7 +13,7 @@ import Decimal, { format, formatTime } from "util/bignum";
 import { render } from "util/vue";
 import { computed, unref } from "vue";
 import vertices from "./layers/vertices";
-import irrQuads from "./layers/irregular";
+import lines from "./layers/lines";
 import { UpgradeType, type GenericUpgrade } from "features/upgrades/upgrade";
 
 /**
@@ -35,6 +35,7 @@ export const main = createLayer("main", function (this: BaseLayer) {
         if (unref(vertices.upgrades[12].bought)) gain = gain.mul(2)
         if (unref(vertices.upgrades[13].bought)) gain = gain.mul(Decimal.div(unref(vertexUpgrades), 3).add(1))
         if (unref(vertices.upgrades[14].bought)) gain = gain.mul(Decimal.add(points.value, 1).log10().add(1))
+        gain = gain.mul(Decimal.pow(1.5, unref(vertices.repeatables[21].amount)))
 
         return gain;
     });
@@ -44,9 +45,9 @@ export const main = createLayer("main", function (this: BaseLayer) {
     const oomps = trackOOMPS(points, pointGain);
 
     const tree = createTree(() => ({
-        nodes: [[vertices.treeNode], [irrQuads.treeNode]],
+        nodes: [[vertices.treeNode], [lines.treeNode]],
         branches: [
-            {startNode: irrQuads.treeNode, endNode: vertices.treeNode}
+            {startNode: lines.treeNode, endNode: vertices.treeNode}
         ],
         onReset() {
             points.value = 10;
@@ -93,7 +94,7 @@ export const main = createLayer("main", function (this: BaseLayer) {
 export const getInitialLayers = (
     /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
     player: Partial<Player>
-): Array<GenericLayer> => [main, vertices, irrQuads];
+): Array<GenericLayer> => [main, vertices, lines];
 
 /**
  * A computed ref whose value is true whenever the game is over.
