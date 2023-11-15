@@ -21,7 +21,7 @@ const layer = createLayer(id, function (this: BaseLayer) {
     const points = computed(() => main.points)
 
     const reset = createReset(() => ({
-        thingsToReset: (): Record<string, unknown>[] => [layer]
+        thingsToReset: (): Record<string, unknown>[] => [upgrades, repeatables]
     }));
 
     const treeNode = createLayerTreeNode(() => ({
@@ -71,16 +71,16 @@ const layer = createLayer(id, function (this: BaseLayer) {
                 description: "Multiply vertex generation by log<sub>10</sub>(vertices+1)+1",
             },
             visibility: upgrades[13].bought
-        })),
+        }))
     }
     const repeatables = {
         21: createRepeatable(repeatable => ({
             requirements: createCostRequirement(() => ({
                 resource: noPersist(points.value),
-                cost: Formula.variable(repeatable.amount).mul(25).add(50)
+                cost: Formula.variable(repeatable.amount).mul(50).add(50)
             })),
             display: {
-                description: "Multiply vertex generation by 1.5 per upgrade"
+                description: "Multiply vertex generation by 1.33 per upgrade"
             },
             visibility: upgrades[14].bought
         }))

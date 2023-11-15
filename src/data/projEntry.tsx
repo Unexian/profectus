@@ -14,7 +14,9 @@ import { render } from "util/vue";
 import { computed, unref } from "vue";
 import vertices from "./layers/vertices";
 import lines from "./layers/lines";
-import { UpgradeType, type GenericUpgrade } from "features/upgrades/upgrade";
+import { UpgradeType, type GenericUpgrade, createUpgrade } from "features/upgrades/upgrade";
+import { noPersist } from "game/persistence";
+import { createCostRequirement } from "game/requirements";
 
 /**
  * @hidden
@@ -35,7 +37,8 @@ export const main = createLayer("main", function (this: BaseLayer) {
         if (unref(vertices.upgrades[12].bought)) gain = gain.mul(2)
         if (unref(vertices.upgrades[13].bought)) gain = gain.mul(Decimal.div(unref(vertexUpgrades), 3).add(1))
         if (unref(vertices.upgrades[14].bought)) gain = gain.mul(Decimal.add(points.value, 1).log10().add(1))
-        gain = gain.mul(Decimal.pow(1.5, unref(vertices.repeatables[21].amount)))
+        gain = gain.mul(Decimal.pow(4/3, unref(vertices.repeatables[21].amount)))
+        gain = gain.mul(unref(lines.effect))
 
         return gain;
     });
@@ -44,8 +47,22 @@ export const main = createLayer("main", function (this: BaseLayer) {
     });
     const oomps = trackOOMPS(points, pointGain);
 
+    const pushUpgrades = {
+        'l': createUpgrade(upgrade => ({
+            requirements: createCostRequirement(() => ({
+                resource: noPersist(points),
+                cost: 750
+            })),
+            display: {
+                description: "Unlock the next layer (permanent)",
+            },
+            visibility: computed(() => Decimal.gte(unref(vertices.repeatables[21].amount), 10) && !unref(upgrade.bought)),
+            mark: true
+        }))
+    }
+
     const tree = createTree(() => ({
-        nodes: [[vertices.treeNode], [lines.treeNode]],
+        nodes: [[vertices.treeNode], [lines.treeNode, pushUpgrades.l]],
         branches: [
             {startNode: lines.treeNode, endNode: vertices.treeNode}
         ],
@@ -83,7 +100,8 @@ export const main = createLayer("main", function (this: BaseLayer) {
         best,
         total,
         oomps,
-        tree
+        tree,
+        pushUpgrades
     };
 });
 
