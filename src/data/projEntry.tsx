@@ -14,9 +14,7 @@ import { render } from "util/vue";
 import { computed, unref } from "vue";
 import vertices from "./layers/vertices";
 import lines from "./layers/lines";
-import { UpgradeType, type GenericUpgrade, createUpgrade } from "features/upgrades/upgrade";
-import { noPersist } from "game/persistence";
-import { createCostRequirement } from "game/requirements";
+import { UpgradeType, type GenericUpgrade } from "features/upgrades/upgrade";
 
 /**
  * @hidden
@@ -47,22 +45,8 @@ export const main = createLayer("main", function (this: BaseLayer) {
     });
     const oomps = trackOOMPS(points, pointGain);
 
-    const pushUpgrades = {
-        'l': createUpgrade(upgrade => ({
-            requirements: createCostRequirement(() => ({
-                resource: noPersist(points),
-                cost: 750
-            })),
-            display: {
-                description: "Unlock the next layer (permanent)",
-            },
-            visibility: computed(() => Decimal.gte(unref(vertices.repeatables[21].amount), 10) && !unref(upgrade.bought)),
-            mark: true
-        }))
-    }
-
     const tree = createTree(() => ({
-        nodes: [[vertices.treeNode], [lines.treeNode, pushUpgrades.l]],
+        nodes: [[vertices.treeNode], [lines.treeNode]],
         branches: [
             {startNode: lines.treeNode, endNode: vertices.treeNode}
         ],
@@ -100,8 +84,7 @@ export const main = createLayer("main", function (this: BaseLayer) {
         best,
         total,
         oomps,
-        tree,
-        pushUpgrades
+        tree
     };
 });
 

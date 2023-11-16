@@ -13,6 +13,7 @@ import Decimal from "util/bignum";
 import { addTooltip } from "features/tooltips/tooltip";
 import { createRepeatable } from "features/repeatable";
 import Formula from "game/formulas/formulas";
+import SpacerVue from "components/layout/Spacer.vue";
 
 const id = 'v'
 const layer = createLayer(id, function (this: BaseLayer) {
@@ -85,6 +86,17 @@ const layer = createLayer(id, function (this: BaseLayer) {
             visibility: upgrades[14].bought
         }))
     }
+    const pushUpgrade = createUpgrade(upgrade => ({
+        requirements: createCostRequirement(() => ({
+            resource: noPersist(points.value),
+            cost: 750
+        })),
+        display: {
+            description: "Unlock the next layer (permanent)",
+        },
+        visibility: computed(() => Decimal.gte(unref(repeatables[21].amount), 10) || unref(upgrade.bought)),
+        mark: true
+    }))
     // reload
     addTooltip(upgrades[13], ({
         display: computed(() => `currently: ${Decimal.div(unref(vertexUpgrades), 3).add(1)}x`)
@@ -94,11 +106,11 @@ const layer = createLayer(id, function (this: BaseLayer) {
     }))
     
     return {
-        name, color, points, treeNode, upgrades, repeatables,
+        name, color, points, treeNode, upgrades, repeatables, pushUpgrade,
         display: jsx(() => (<>
             <MainDisplay resource={points.value} color={color} />
             {renderRow(upgrades[11], upgrades[12], upgrades[13], upgrades[14])}
-            {render(repeatables[21])}
+            {renderRow(repeatables[21], pushUpgrade)}
         </>))
     }
 })
